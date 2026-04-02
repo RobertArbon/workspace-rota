@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { UserButton, Show, SignInButton, SignUpButton } from '@clerk/tanstack-react-start'
+import { Show, SignInButton, SignUpButton } from '@clerk/tanstack-react-start'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -8,10 +8,7 @@ export const Route = createFileRoute('/')({
 function Home() {
   return (
     <div>
-      <h1>Index Route</h1>
-      <Show when="signed-in">
-        <UserButton />
-      </Show>
+      <h1>Home Page </h1>
       <Show when="signed-out">
         <SignInButton />
         <SignUpButton />
