@@ -15,8 +15,6 @@ todos.json
 
 /generated/prisma
 
-/generated/prisma
-
 # Playwright
 playwright-report/
 test-results/
