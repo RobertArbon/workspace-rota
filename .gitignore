@@ -13,3 +13,7 @@ __unconfig*
 todos.json
 
 /generated/prisma
+
+# Playwright
+playwright-report/
+test-results/
