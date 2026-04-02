@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -10,4 +5,140 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ── Core ──────────────────────────────────────────────────────────────────────
+
+model Location {
+  id      String @id @default(cuid())
+  name    String
+  address String
+  desks   Desk[]
+  users   User[]
+}
+
+model Desk {
+  id         String   @id @default(cuid())
+  name       String
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id])
+}
+
+model User {
+  id         String   @id @default(cuid())
+  clerkId    String   @unique
+  name       String
+  email      String   @unique
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id])
+
+  rotaPlans               RotaPlan[]
+  rotaDays                RotaDay[]
+  swapRequestsMade        SwapRequest[]     @relation("SwapRequester")
+  swapAcceptancesMade     SwapAcceptance[]  @relation("SwapAcceptor")
+  standaloneOffersMade    StandaloneOffer[] @relation("StandaloneOfferer")
+  standaloneOffersClaimed StandaloneOffer[] @relation("StandaloneClaimer")
+}
+
+// ── Rota ──────────────────────────────────────────────────────────────────────
+
+model RotaPlan {
+  id                 String        @id @default(cuid())
+  userId             String
+  user               User          @relation(fields: [userId], references: [id])
+  effectiveFrom      DateTime
+  effectiveUntilSoft DateTime
+  effectiveUntilHard DateTime
+  days               RotaPlanDay[]
+}
+
+model RotaPlanDay {
+  id        String   @id @default(cuid())
+  planId    String
+  plan      RotaPlan @relation(fields: [planId], references: [id])
+  dayOfWeek Int
+
+  @@unique([planId, dayOfWeek])
+}
+
+enum RotaDayStatus {
+  PAID
+  CONTRACTED
+}
+
+model RotaDay {
+  id     String         @id @default(cuid())
+  userId String
+  user   User           @relation(fields: [userId], references: [id])
+  date   DateTime
+  status RotaDayStatus?
+
+  swapOffers           SwapOffer[]
+  standaloneOffer      StandaloneOffer?
+  providedInAcceptance SwapAcceptance?
+
+  @@unique([userId, date])
+}
+
+// ── Swaps ─────────────────────────────────────────────────────────────────────
+
+enum SwapRequestStatus {
+  OPEN
+  FULFILLED
+  CANCELLED
+}
+
+model SwapRequest {
+  id          String            @id @default(cuid())
+  requesterId String
+  requester   User              @relation("SwapRequester", fields: [requesterId], references: [id])
+  wantedDate  DateTime
+  status      SwapRequestStatus @default(OPEN)
+  createdAt   DateTime          @default(now())
+
+  offers     SwapOffer[]
+  acceptance SwapAcceptance?
+}
+
+model SwapOffer {
+  id            String      @id @default(cuid())
+  swapRequestId String
+  swapRequest   SwapRequest @relation(fields: [swapRequestId], references: [id])
+  rotaDayId     String
+  rotaDay       RotaDay     @relation(fields: [rotaDayId], references: [id])
+
+  acceptance SwapAcceptance? @relation("AcceptedOffer")
+}
+
+model SwapAcceptance {
+  id                String      @id @default(cuid())
+  swapRequestId     String      @unique
+  swapRequest       SwapRequest @relation(fields: [swapRequestId], references: [id])
+  acceptorId        String
+  acceptor          User        @relation("SwapAcceptor", fields: [acceptorId], references: [id])
+  providedRotaDayId String      @unique
+  providedRotaDay   RotaDay     @relation(fields: [providedRotaDayId], references: [id])
+  acceptedOfferId   String?     @unique
+  acceptedOffer     SwapOffer?  @relation("AcceptedOffer", fields: [acceptedOfferId], references: [id])
+  resolvedAt        DateTime
+}
+
+// ── Standalone offers ─────────────────────────────────────────────────────────
+
+enum StandaloneOfferStatus {
+  OPEN
+  CLAIMED
+  CANCELLED
+}
+
+model StandaloneOffer {
+  id          String                @id @default(cuid())
+  offererId   String
+  offerer     User                  @relation("StandaloneOfferer", fields: [offererId], references: [id])
+  rotaDayId   String                @unique
+  rotaDay     RotaDay               @relation(fields: [rotaDayId], references: [id])
+  status      StandaloneOfferStatus @default(OPEN)
+  claimedById String?
+  claimedBy   User?                 @relation("StandaloneClaimer", fields: [claimedById], references: [id])
+  claimedAt   DateTime?
 }
