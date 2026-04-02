@@ -1,4 +1,5 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { ClerkProvider } from '@clerk/tanstack-react-start'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import Footer from '../components/Footer'
@@ -40,8 +41,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
+        <ClerkProvider>
         <Header />
         {children}
+        </ClerkProvider>
         <Footer />
         <TanStackDevtools
           config={{
@@ -59,3 +62,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     </html>
   )
 }
+
+
+
